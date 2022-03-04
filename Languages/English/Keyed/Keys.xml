@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LanguageData>
+	<Open_Log>Open Log</Open_Log>
+	<Show_Messages>Show Messages</Show_Messages>
+	<Toggle_showing_white__or_sometimes_colored__log_messages.>Toggle showing white (or sometimes colored) log messages.</Toggle_showing_white__or_sometimes_colored__log_messages.>
+	<Show_Warnings>Show Warnings</Show_Warnings>
+	<Toggle_showing_yellow_log_warnings.>Toggle showing yellow log warnings.</Toggle_showing_yellow_log_warnings.>
+	<Show_Errors>Show Errors</Show_Errors>
+	<Toggle_showing_red_log_errors.>Toggle showing red log errors.</Toggle_showing_red_log_errors.>
+	<Clear>Clear</Clear>
+	<Clear_all_log_messages.>Clear all log messages.</Clear_all_log_messages.>
+	<Auto-open_is_ON>Auto-open is ON</Auto-open_is_ON>
+	<Auto-open_is_OFF>Auto-open is OFF</Auto-open_is_OFF>
+	<Copy_to_clipboard>Copy to clipboard</Copy_to_clipboard>
+	<Copy_all_messages_to_the_clipboard.>Copy all messages to the clipboard.</Copy_all_messages_to_the_clipboard.>
+</LanguageData>

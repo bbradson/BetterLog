@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<MainButtonDef>
+		<defName>DebugLog</defName>
+		<label>Log</label>
+		<description>Open the debug log.</description>
+		<tabWindowClass>BetterLog.MainTabWindow_Log</tabWindowClass>
+		<canBeTutorDenied>false</canBeTutorDenied>
+		<order>592</order>
+		<validWithoutMap>true</validWithoutMap>
+		<minimized>True</minimized>
+		<iconPath>LogButton/Log</iconPath>
+	</MainButtonDef>
+</Defs>
