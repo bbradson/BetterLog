@@ -1,31 +1,36 @@
-﻿/* Copyright (c) 2022 bradson
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
+﻿// Copyright (c) 2022 bradson
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
+using FisheryLib;
 using Verse.Sound;
+using CodeInstructions = System.Collections.Generic.IEnumerable<HarmonyLib.CodeInstruction>;
+using Log = Verse.Log;
 
 namespace BetterLog;
 public class Patches : ClassWithFishPatches
 {
+	public static readonly float LISTABLE_OPTION_SIZE = new ListableOption(null, null).minHeight; //45f; Should've been a const, but isn't for some reason.
+
 	public class MainMenuDrawer_DoMainMenuControls_Patch : FishPatch
 	{
 		public override string Name => "Display a log button in the menu";
 		public override string? Description => "Somewhere inbetween options and quit.";
 		public override Delegate? TargetMethodGroup => MainMenuDrawer.DoMainMenuControls;
-		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> codes, MethodBase method)
-			=> codes.ReplaceAt(
-				(codes, i)
+		public static void Prefix(ref Rect rect) => rect.height += LISTABLE_OPTION_SIZE;
+		public static CodeInstructions Transpiler(CodeInstructions codes, MethodBase method)
+			=> codes.ReplaceAt((codes, i)
 				=> codes[i] == FishTranspiler.Call(() => new List<ListableOption>().Add(null!))
 				&& FindMenuButtonOptionsString(codes, i),
 				code => new[]
 				{
 					code,
-					FishTranspiler.FindLoadLocal(method, typeof(List<ListableOption>)),
+					FishTranspiler.FirstLocalVariable(method, typeof(List<ListableOption>)),
 					FishTranspiler.Call(AddNewButton)
 				});
 
@@ -53,7 +58,6 @@ public class Patches : ClassWithFishPatches
 
 	public class MainTabWindow_Menu_Patch : FishPatch
 	{
-		public const float LISTABLE_OPTION_SIZE = 45f; //ListableOption.minHeight. It's hardcoded, really, and should be a const, but isn't for some reason.
 		public override bool ShowSettings => false;
 		public override MethodBase TargetMethodInfo => AccessTools.PropertyGetter(typeof(MainTabWindow_Menu), nameof(MainTabWindow_Menu.RequestedTabSize));
 		public static Vector2 Postfix(Vector2 __result)
@@ -105,15 +109,9 @@ public class Patches : ClassWithFishPatches
 		public override string Name => "Modify Log Limit";
 		public override string? Description => "RimWorld normally stops logging after 1000 messages. This allows changing that number. Use the slider below to set the new value.";
 		public override Delegate? TargetMethodGroup => Log.Notify_MessageReceivedThreadedInternal;
-		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> codes)
-		{
-			foreach (var code in codes)
-			{
-				yield return code.operand is int number && number == 1000
-					? FishTranspiler.CallPropertyGetter(typeof(Settings), nameof(Settings.LoggingLimit)).WithLabelsAndBlocks(code)
-					: code;
-			}
-		}
+		public static CodeInstructions Transpiler(CodeInstructions codes)
+			=> codes.Replace(code => code.operand is int number && number == 1000,
+				code => FishTranspiler.CallPropertyGetter(typeof(Settings), nameof(Settings.LoggingLimit)).WithLabelsAndBlocks(code));
 	}
 
 	public class FileLog_Log_Patch : FishPatch
@@ -138,7 +136,7 @@ public class Patches : ClassWithFishPatches
 		public override bool ShowSettings => false;
 		public override Expression<Action>? TargetMethod => () => default(EditWindow_Log)!.DoMessagesListing(default);
 		public override int TranspilerMethodPriority => Priority.LowerThanNormal;
-		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> codes)
+		public static CodeInstructions Transpiler(CodeInstructions codes)
 			=> codes.InsertAfter(c => c == FishTranspiler.CallPropertyGetter(typeof(Log), nameof(Log.Messages)),
 				 FishTranspiler.Call(FilteredMessages));
 		public static IEnumerable<LogMessage> FilteredMessages(IEnumerable<LogMessage> messages) => messages.Where(message => IsAllowedType(message.type));
@@ -155,25 +153,24 @@ public class Patches : ClassWithFishPatches
 	{
 		public override bool ShowSettings => false;
 		public override MethodBase TargetMethodInfo => AccessTools.Method(typeof(EditWindow_Log), nameof(EditWindow_Log.DoWindowContents));
-		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+		public static CodeInstructions Transpiler(CodeInstructions instructions)
 			=> instructions
 			.ReplaceAt((codes, i)
 				=> codes[i] == _widget_ButtonText
-				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.LoadString("Trace big"),
+				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.String("Trace big"),
 				code => FishTranspiler.Call(ShowMessagesButton).WithLabelsAndBlocks(code))
 
 			.ReplaceAt((codes, i)
 				=> codes[i] == _widget_ButtonText
-				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.LoadString("Trace medium"),
+				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.String("Trace medium"),
 				code => FishTranspiler.Call(ShowWarningsButton).WithLabelsAndBlocks(code))
 
 			.ReplaceAt((codes, i)
 				=> codes[i] == _widget_ButtonText
-				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.LoadString("Trace small"),
+				  && i - 8 > 0 && codes[i - 8] == FishTranspiler.String("Trace small"),
 				code => FishTranspiler.Call(ShowErrorsButton).WithLabelsAndBlocks(code))
 			
-			.InsertAfter(
-				  c => c.opcode == OpCodes.Ldstr,
+			.InsertAfter(c => c.opcode == OpCodes.Ldstr,
 					FishTranspiler.Call(Translator.TranslateSimple))
 			
 			.Replace(c => c.opcode == OpCodes.Ldstr && c.operand is string s && s != string.Empty,
@@ -249,7 +246,7 @@ public class Patches : ClassWithFishPatches
 			if (RocketManLogPatchMethod != null)
 				Harmony.Unpatch(RocketManLogPatchMethod, ((Delegate)DisableRocketmanLogPatch).Method);
 		}
-		public static bool DisableRocketmanLogPatch(ref IEnumerable<CodeInstruction> __result, IEnumerable<CodeInstruction> instructions)
+		public static bool DisableRocketmanLogPatch(ref CodeInstructions __result, CodeInstructions instructions)
 		{
 			__result = instructions;
 			return false;
@@ -267,10 +264,10 @@ public class Patches : ClassWithFishPatches
 		public override bool DefaultState => false;
 		public override string? Description => "RimWorld normally shows any text that is missing translations in zalgo when dev mode is enabled. This disables that behaviour.";
 		public override Delegate? TargetMethodGroup => Translator.PseudoTranslated;
-		public static bool Prefix(string original, ref string __result)
+		public static CodeInstructions Transpiler(CodeInstructions codes, MethodBase method)
 		{
-			__result = original;
-			return false;
+			yield return FishTranspiler.FirstArgument(method, typeof(string));
+			yield return FishTranspiler.Return;
 		}
 	}
 }

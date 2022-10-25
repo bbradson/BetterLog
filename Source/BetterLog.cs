@@ -1,8 +1,8 @@
-﻿/* Copyright (c) 2022 bradson
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
+﻿// Copyright (c) 2022 bradson
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 global using System;
 global using System.Collections.Generic;
 global using System.Reflection;
@@ -34,12 +34,15 @@ public class BetterLog : Mod
 	public Settings Settings { get; private set; }
 }
 
-[DefOf]
+[StaticConstructorOnStartup]
 public static class LogMainButtonDef
 {
-#pragma warning disable CS8618, CA2211, IDE1006
-	public static MainButtonDef DebugLog;
+	public static MainButtonDef DebugLog => _debugLog ??= DefDatabase<MainButtonDef>.GetNamed(nameof(DebugLog));
+	private static MainButtonDef? _debugLog;
 
-	static LogMainButtonDef() => Settings.ButtonDefLoaded = true;
-#pragma warning restore CS8618, CA2211, IDE1006
+	static LogMainButtonDef()
+	{
+		Settings.ButtonDefLoaded = true;
+		DebugLog.buttonVisible = Settings.ShowMainButton;
+	}
 }

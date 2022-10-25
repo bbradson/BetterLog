@@ -1,8 +1,8 @@
-﻿/* Copyright (c) 2022 bradson
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- */
+﻿// Copyright (c) 2022 bradson
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
 using System.Linq;
 
 namespace BetterLog;
@@ -47,7 +47,7 @@ public class Settings : ModSettings
 		Scribe_Values.Look(ref _loggingLimit, "loggingLimit", 2000);
 
 		var showMainButton = ShowMainButton;
-		Scribe_Values.Look(ref showMainButton, "showMainButton", false);
+		Scribe_Values.Look(ref showMainButton, "showMainButton", true);
 		ShowMainButton = showMainButton;
 
 		var logMessageColor = LogMessageColor;
@@ -163,7 +163,11 @@ public class Settings : ModSettings
 		ls.curY += colorPickerHeight;
 
 		return !ShouldSkipForScrollView(inRect.height, Text.LineHeight, ls.curY - colorPickerHeight, _scrollPosition.y)
+#if V1_3
 			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, colorSize: COLOR_SIZE, colorPadding: COLOR_PADDING);
+#else
+			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, out _, colorSize: COLOR_SIZE, colorPadding: COLOR_PADDING);
+#endif
 	}
 
 	public static int Slider(Listing_Standard ls, Rect inRect, int value, string label, int min, int max, int roundToNearest)
@@ -183,7 +187,7 @@ public class Settings : ModSettings
 
 	private static List<Color>? _allColors;
 	private static int _loggingLimit = 2000;
-	private static bool _showMainButton = false;
+	private static bool _showMainButton = true;
 	private static Color _logMessageColor = Color.white;
 	private static Color _logWarningColor = Color.yellow;
 	private static Color _logErrorColor = ColorLibrary.LogError;
