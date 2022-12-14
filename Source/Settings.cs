@@ -162,7 +162,7 @@ public class Settings : ModSettings
 		var colorPickerRect = _scrollRect with { y = ls.curY, height = colorPickerHeight };
 		ls.curY += colorPickerHeight;
 
-		return !ShouldSkipForScrollView(inRect.height, Text.LineHeight, ls.curY - colorPickerHeight, _scrollPosition.y)
+		return !ShouldSkipForScrollView(inRect.height, colorPickerHeight, ls.curY - colorPickerHeight, _scrollPosition.y)
 #if V1_3
 			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, colorSize: COLOR_SIZE, colorPadding: COLOR_PADDING);
 #else

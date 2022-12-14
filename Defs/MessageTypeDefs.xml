@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Defs>
+	<MessageTypeDef>
+		<defName>LogMessageMessage</defName>
+		<sound>ClickReject</sound>
+	</MessageTypeDef>
+	<MessageTypeDef>
+		<defName>LogWarningMessage</defName>
+		<sound>Message_NeutralEvent</sound>
+	</MessageTypeDef>
+	<MessageTypeDef>
+		<defName>LogErrorMessage</defName>
+		<sound>Message_NegativeEvent</sound>
+	</MessageTypeDef>
+</Defs>

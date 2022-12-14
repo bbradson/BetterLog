@@ -38,8 +38,8 @@ public class Patches : ClassWithFishPatches
 		{
 			for ( ; i > 1; i--)
 			{
-				if (codes[i].opcode == OpCodes.Ldstr)
-					return codes[i].operand is string operand && operand == "MenuButton-Options";
+				if (codes[i].opcode.LoadsString())
+					return codes[i] == FishTranspiler.String("MenuButton-Options");
 			}
 			return false;
 		}
@@ -69,7 +69,7 @@ public class Patches : ClassWithFishPatches
 
 	public class Log_Message_Patch : FishPatch
 	{
-		public override string Name => "Disable Log Messages";
+		public override string Name => "Disable log messages";
 		public override string? Description => "Fully prevents new white (or sometimes colored) log messages from being generated. Does not affect anything created before toggling this.";
 		public override bool DefaultState => false;
 		public override Delegate? TargetMethodGroup => (Action<string>)Log.Message;
@@ -78,7 +78,7 @@ public class Patches : ClassWithFishPatches
 
 	public class Log_Warning_Patch : FishPatch
 	{
-		public override string Name => "Disable Log Warnings";
+		public override string Name => "Disable log warnings";
 		public override string? Description => "Fully prevents new yellow (or sometimes colored) log warnings from being generated. Does not affect anything created before toggling this.";
 		public override bool DefaultState => false;
 		public override Delegate? TargetMethodGroup => (Action<string>)Log.Warning;
@@ -87,11 +87,71 @@ public class Patches : ClassWithFishPatches
 
 	public class Log_Error_Patch : FishPatch
 	{
-		public override string Name => "Disable Log Errors";
+		public override string Name => "Disable log errors";
 		public override string? Description => "Fully prevents new red (or sometimes colored) log errors from being generated. Does not affect anything created before toggling this.";
 		public override bool DefaultState => false;
 		public override Delegate? TargetMethodGroup => (Action<string>)Log.Error;
 		public static bool Prefix() => false;
+	}
+
+	public class Log_Message_Message_Patch : FishPatch
+	{
+		public override bool ShowSettings => !Log_Message_Patch.Enabled;
+		public override string Name => "Trigger in-game messages for log messages";
+		public override string? Description => "These show up on the top left.";
+		public override bool DefaultState => false;
+		public override Delegate? TargetMethodGroup => (Action<string>)Log.Message;
+
+		public static void Postfix(string text)
+		{
+			if (!Log_Message_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
+				Messages.Message(new(text.Colorize(Settings.LogMessageColor), DefOfs.LogMessageMessage), false);
+		}
+
+		public static Log_Message_Patch Log_Message_Patch => _log_Message_Patch ??= Get<Log_Message_Patch>();
+		private static Log_Message_Patch? _log_Message_Patch;
+	}
+
+	public class Log_Warning_Message_Patch : FishPatch
+	{
+		public override bool ShowSettings => !Log_Warning_Patch.Enabled;
+		public override string Name => "Trigger in-game messages for log warnings";
+		public override string? Description => "These show up on the top left.";
+		public override bool DefaultState => false;
+		public override Delegate? TargetMethodGroup => (Action<string>)Log.Warning;
+
+		public static void Postfix(string text)
+		{
+			if (!Log_Warning_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
+				Messages.Message(new(text.Colorize(Settings.LogWarningColor), DefOfs.LogWarningMessage), false);
+		}
+
+		public static Log_Warning_Patch Log_Warning_Patch => _log_Warning_Patch ??= Get<Log_Warning_Patch>();
+		private static Log_Warning_Patch? _log_Warning_Patch;
+	}
+
+	public class Log_Error_Message_Patch : FishPatch
+	{
+		public override bool ShowSettings => !Log_Error_Patch.Enabled;
+		public override string Name => "Trigger in-game messages for log errors";
+		public override string? Description => "These show up on the top left.";
+		public override Delegate? TargetMethodGroup => (Action<string>)Log.Error;
+
+		public static void Postfix(string text)
+		{
+			try
+			{
+				if (!Log_Error_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
+					Messages.Message(new(text.Colorize(Settings.LogErrorColor), DefOfs.LogErrorMessage), false);
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"An error occurred while logging an error: {ex}");
+			}
+		}
+
+		public static Log_Error_Patch Log_Error_Patch => _log_Error_Patch ??= Get<Log_Error_Patch>();
+		private static Log_Error_Patch? _log_Error_Patch;
 	}
 
 	public class Log_Notify_MessageReceivedThreadedInternal_Disable_Patch : FishPatch
@@ -111,7 +171,7 @@ public class Patches : ClassWithFishPatches
 		public override Delegate? TargetMethodGroup => Log.Notify_MessageReceivedThreadedInternal;
 		public static CodeInstructions Transpiler(CodeInstructions codes)
 			=> codes.Replace(code => code.operand is int number && number == 1000,
-				code => FishTranspiler.CallPropertyGetter(typeof(Settings), nameof(Settings.LoggingLimit)).WithLabelsAndBlocks(code));
+				code => FishTranspiler.PropertyGetter(typeof(Settings), nameof(Settings.LoggingLimit)).WithLabelsAndBlocks(code));
 	}
 
 	public class FileLog_Log_Patch : FishPatch
@@ -137,7 +197,7 @@ public class Patches : ClassWithFishPatches
 		public override Expression<Action>? TargetMethod => () => default(EditWindow_Log)!.DoMessagesListing(default);
 		public override int TranspilerMethodPriority => Priority.LowerThanNormal;
 		public static CodeInstructions Transpiler(CodeInstructions codes)
-			=> codes.InsertAfter(c => c == FishTranspiler.CallPropertyGetter(typeof(Log), nameof(Log.Messages)),
+			=> codes.InsertAfter(c => c == FishTranspiler.PropertyGetter(typeof(Log), nameof(Log.Messages)),
 				 FishTranspiler.Call(FilteredMessages));
 		public static IEnumerable<LogMessage> FilteredMessages(IEnumerable<LogMessage> messages) => messages.Where(message => IsAllowedType(message.type));
 		public static bool IsAllowedType(LogMessageType type) => type switch
