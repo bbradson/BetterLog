@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 using FisheryLib;
+using Verse;
 using Verse.Sound;
 using CodeInstructions = System.Collections.Generic.IEnumerable<HarmonyLib.CodeInstruction>;
 using Log = Verse.Log;
@@ -44,7 +45,7 @@ public class Patches : ClassWithFishPatches
 			return false;
 		}
 
-		public static void AddNewButton(List<ListableOption> list) => list.Add(new("Open_Log".Translate(), () => Find.UIRoot.debugWindowOpener.ToggleLogWindow()));
+		public static void AddNewButton(List<ListableOption> list) => list.Add(new("Open_Log".Translate(), Find.UIRoot.debugWindowOpener.ToggleLogWindow));
 	}
 
 	public class MainMenuDrawer_DoMainMenuControls_Extra_Patch : FishPatch
@@ -105,7 +106,7 @@ public class Patches : ClassWithFishPatches
 		public static void Postfix(string text)
 		{
 			if (!Log_Message_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
-				Messages.Message(new(text.Colorize(Settings.LogMessageColor), DefOfs.LogMessageMessage), false);
+				Messages.Message(new(Truncate_Log_Message_Message(text, 2).Colorize(Settings.LogMessageColor), DefOfs.LogMessageMessage), false);
 		}
 
 		public static Log_Message_Patch Log_Message_Patch => _log_Message_Patch ??= Get<Log_Message_Patch>();
@@ -123,7 +124,7 @@ public class Patches : ClassWithFishPatches
 		public static void Postfix(string text)
 		{
 			if (!Log_Warning_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
-				Messages.Message(new(text.Colorize(Settings.LogWarningColor), DefOfs.LogWarningMessage), false);
+				Messages.Message(new(Truncate_Log_Message_Message(text, 2).Colorize(Settings.LogWarningColor), DefOfs.LogWarningMessage), false);
 		}
 
 		public static Log_Warning_Patch Log_Warning_Patch => _log_Warning_Patch ??= Get<Log_Warning_Patch>();
@@ -142,7 +143,7 @@ public class Patches : ClassWithFishPatches
 			try
 			{
 				if (!Log_Error_Patch.Enabled && Current.ProgramState == ProgramState.Playing)
-					Messages.Message(new(text.Colorize(Settings.LogErrorColor), DefOfs.LogErrorMessage), false);
+					Messages.Message(new(Truncate_Log_Message_Message(text, 2).Colorize(Settings.LogErrorColor), DefOfs.LogErrorMessage), false);
 			}
 			catch (Exception ex)
 			{
@@ -152,6 +153,37 @@ public class Patches : ClassWithFishPatches
 
 		public static Log_Error_Patch Log_Error_Patch => _log_Error_Patch ??= Get<Log_Error_Patch>();
 		private static Log_Error_Patch? _log_Error_Patch;
+	}
+
+	public static string Truncate_Log_Message_Message(string message, int maxLines)
+	{
+		message = message.StripTags();
+
+		var newLine = Environment.NewLine;
+		var newLineLength = newLine.Length;
+		var messageLength = message.Length;
+		var lineNumber = 0;
+
+		for (var i = 0; i + newLineLength <= messageLength; i++)
+		{
+			var isNewLine = true;
+			for (var j = 0; j < newLineLength; j++)
+			{
+				if (message[i + j] == newLine[j])
+					continue;
+
+				isNewLine = false;
+				break;
+			}
+
+			if (isNewLine)
+				lineNumber++;
+
+			if (lineNumber >= maxLines)
+				return message.Substring(0, i - 1);
+		}
+
+		return message;
 	}
 
 	public class Log_Notify_MessageReceivedThreadedInternal_Disable_Patch : FishPatch
