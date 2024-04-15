@@ -6,12 +6,17 @@
 global using System;
 global using System.Collections.Generic;
 global using System.Reflection;
+#if !V1_3 && !V1_4
+global using LudeonTK;
+#endif
 global using HarmonyLib;
 global using RimWorld;
 global using Verse;
 global using UnityEngine;
+using JetBrains.Annotations;
 
 namespace BetterLog;
+[PublicAPI]
 public class BetterLog : Mod
 {
 	public BetterLog(ModContentPack content) : base(content)
@@ -32,17 +37,4 @@ public class BetterLog : Mod
 	public override string SettingsCategory() => FishPatch.MOD_NAME;
 
 	public Settings Settings { get; private set; }
-}
-
-[StaticConstructorOnStartup]
-public static class LogMainButtonDef
-{
-	public static MainButtonDef DebugLog => _debugLog ??= DefDatabase<MainButtonDef>.GetNamed(nameof(DebugLog));
-	private static MainButtonDef? _debugLog;
-
-	static LogMainButtonDef()
-	{
-		Settings.ButtonDefLoaded = true;
-		DebugLog.buttonVisible = Settings.ShowMainButton;
-	}
 }

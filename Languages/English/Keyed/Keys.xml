@@ -13,4 +13,6 @@
 	<Auto-open_is_OFF>Auto-open is OFF</Auto-open_is_OFF>
 	<Copy_to_clipboard>Copy to clipboard</Copy_to_clipboard>
 	<Copy_all_messages_to_the_clipboard.>Copy all messages to the clipboard.</Copy_all_messages_to_the_clipboard.>
+	<Pause_on_error_is_ON>Pause on error is ON</Pause_on_error_is_ON>
+	<Pause_on_error_is_OFF>Pause on error is OFF</Pause_on_error_is_OFF>
 </LanguageData>

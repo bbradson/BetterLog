@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+	<PropertyGroup>
+		<AssemblyName>BetterLog</AssemblyName>
+		<RootNamespace>BetterLog</RootNamespace>
+		<Authors>Bradson</Authors>
+		<Version>1.1.0</Version>
+		<TargetFramework>net48</TargetFramework>
+		<LangVersion>preview</LangVersion>
+		<DebugSymbols>true</DebugSymbols>
+		<Nullable>enable</Nullable>
+		<PlatformTarget>AnyCPU</PlatformTarget>
+		<Optimize>true</Optimize>
+		<EnableNETAnalyzers>True</EnableNETAnalyzers>
+		<AnalysisLevel>preview-recommended</AnalysisLevel>
+		<ErrorReport>prompt</ErrorReport>
+		<WarningLevel>5</WarningLevel>
+		<DebugType>portable</DebugType>
+		<NoWarn>CA1000;CA1051;CA1305;CA1310;CA1707;CA1708;CA1711;CA1725;CA1852;CA2201</NoWarn>
+		<BaseIntermediateOutputPath>obj\$(MSBuildProjectName)\$(Configuration)\</BaseIntermediateOutputPath>
+		<MSBuildProjectExtensionsPath>obj\$(MSBuildProjectName)\$(Configuration)\</MSBuildProjectExtensionsPath>
+		<DefaultItemExcludes>$(DefaultItemExcludes);obj/**/*.*</DefaultItemExcludes>
+		<PublicizerClearCacheOnClean>true</PublicizerClearCacheOnClean>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Zetrith.Prepatcher" Version="1.*" />
+		<PackageReference Include="PolySharp" Version="1.*" />
+		<PackageReference Include="Krafs.Publicizer" Version="2.*" />
+		<Publicize Include="Assembly-CSharp" />
+	</ItemGroup>
+</Project>

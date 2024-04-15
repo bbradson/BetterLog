@@ -6,17 +6,41 @@
 using System.Linq;
 
 namespace BetterLog;
+
 public class Settings : ModSettings
 {
 	public const string LOGGING_LIMIT_SLIDER_LABEL = "Max messages limit:";
 	public const string SHOW_MAIN_BUTTON = "Display a log button in the main button bar";
-	public const string SHOW_MAIN_BUTTON_TOOLTIP = "Show a button for opening the log window at the bottom right in the main button bar.";
+
+	public const string SHOW_MAIN_BUTTON_TOOLTIP
+		= "Show a button for opening the log window at the bottom right in the main button bar.";
 
 	public static bool ButtonDefLoaded { get; set; }
-	public static int LoggingLimit { get => _loggingLimit; set => _loggingLimit = value; }
-	public static Color LogMessageColor { get => _logMessageColor; set => _logMessageColor = value; }
-	public static Color LogWarningColor { get => _logWarningColor; set => _logWarningColor = value; }
-	public static Color LogErrorColor { get => _logErrorColor; set => _logErrorColor = value; }
+
+	public static int LoggingLimit
+	{
+		get => _loggingLimit;
+		set => _loggingLimit = value;
+	}
+
+	public static Color LogMessageColor
+	{
+		get => _logMessageColor;
+		set => _logMessageColor = value;
+	}
+
+	public static Color LogWarningColor
+	{
+		get => _logWarningColor;
+		set => _logWarningColor = value;
+	}
+
+	public static Color LogErrorColor
+	{
+		get => _logErrorColor;
+		set => _logErrorColor = value;
+	}
+
 	public static bool ShowMainButton
 	{
 		get => _showMainButton;
@@ -27,11 +51,13 @@ public class Settings : ModSettings
 				LogMainButtonDef.DebugLog.buttonVisible = value;
 		}
 	}
+
 	public static List<Color> AllColors
 		=> _allColors
-		??= DefDatabase<ColorDef>.AllDefsListForReading.Select(def => def.color)
-		.Union(typeof(ColorLibrary).GetFields(AccessTools.allDeclared).Select(field => (Color)field.GetValue(null)))
-		.Union(new[] { Color.red, Color.yellow, Color.white }).ToList();
+			??= DefDatabase<ColorDef>.AllDefsListForReading.Select(static def => def.color)
+				.Union(typeof(ColorLibrary).GetFields(AccessTools.allDeclared)
+					.Select(static field => (Color)field.GetValue(null)))
+				.Union(new[] { Color.red, Color.yellow, Color.white }).ToList();
 
 	public override void ExposeData()
 	{
@@ -40,7 +66,7 @@ public class Settings : ModSettings
 		foreach (var patchClass in FishPatch.AllPatchClasses)
 		{
 			var patchHolder = patchClass.PatchHolder;
-			Scribe_Deep.Look(ref patchHolder, patchClass.GetType().Name, new[] { patchClass.GetType() });
+			Scribe_Deep.Look(ref patchHolder, patchClass.GetType().Name, patchClass.GetType());
 			patchClass.PatchHolder = patchHolder;
 		}
 
@@ -66,7 +92,7 @@ public class Settings : ModSettings
 	public static void DoSettingsWindowContents(Rect inRect)
 	{
 		Widgets.BeginScrollView(inRect, ref _scrollPosition, _scrollRect);
-		var ls = new Listing_Standard() { maxOneColumn = true };
+		var ls = new Listing_Standard { maxOneColumn = true };
 		ls.Begin(_scrollRect);
 
 		ContentAbovePatches(ls, inRect);
@@ -100,6 +126,7 @@ public class Settings : ModSettings
 				if (check != patch.Enabled)
 					patch.Enabled = check;
 			}
+
 			ls.Gap();
 		}
 
@@ -108,7 +135,10 @@ public class Settings : ModSettings
 		ls.End();
 
 		Widgets.EndScrollView();
-		_scrollRect = _scrollRect with { height = ls.curY + 50f, width = inRect.width - GUI.skin.verticalScrollbar.fixedWidth - 5f };
+		_scrollRect = _scrollRect with
+		{
+			height = ls.curY + 50f, width = inRect.width - GUI.skin.verticalScrollbar.fixedWidth - 5f
+		};
 	}
 
 	public static void ContentAbovePatches(Listing_Standard ls, Rect inRect)
@@ -128,10 +158,12 @@ public class Settings : ModSettings
 	public const int COLOR_SIZE = 22;
 	public const int COLOR_PADDING = 2;
 	public const int COLOR_BOX_SIZE = COLOR_SIZE + (COLOR_PADDING * 3);
+
 	public static void ContentBelowPatches(Listing_Standard ls, Rect inRect)
 	{
 		ls.Gap();
-		if (!FishPatch.Get<Patches.Log_Notify_MessageReceivedThreadedInternal_Disable_Patch>().Enabled && FishPatch.Get<Patches.Log_Notify_MessageReceivedThreadedInternal_Modify_Patch>().Enabled)
+		if (!FishPatch.Get<Patches.Log_Notify_MessageReceivedThreadedInternal_Disable_Patch>().Enabled
+			&& FishPatch.Get<Patches.Log_Notify_MessageReceivedThreadedInternal_Modify_Patch>().Enabled)
 		{
 			var newLoggingLimit = Slider(ls, _scrollRect, LoggingLimit, LOGGING_LIMIT_SLIDER_LABEL, 0, 10000, 100);
 			if (newLoggingLimit != LoggingLimit)
@@ -162,27 +194,36 @@ public class Settings : ModSettings
 		var colorPickerRect = _scrollRect with { y = ls.curY, height = colorPickerHeight };
 		ls.curY += colorPickerHeight;
 
-		return !ShouldSkipForScrollView(inRect.height, colorPickerHeight, ls.curY - colorPickerHeight, _scrollPosition.y)
+		return !ShouldSkipForScrollView(inRect.height, colorPickerHeight, ls.curY - colorPickerHeight,
+				_scrollPosition.y)
 #if V1_3
-			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, colorSize: COLOR_SIZE, colorPadding: COLOR_PADDING);
+			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, colorSize: COLOR_SIZE,
+				colorPadding: COLOR_PADDING);
 #else
-			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, out _, colorSize: COLOR_SIZE, colorPadding: COLOR_PADDING);
+			&& Widgets.ColorSelector(colorPickerRect, ref color, AllColors, out _, colorSize: COLOR_SIZE,
+				colorPadding: COLOR_PADDING);
 #endif
 	}
 
-	public static int Slider(Listing_Standard ls, Rect inRect, int value, string label, int min, int max, int roundToNearest)
+	public static int Slider(Listing_Standard ls, Rect inRect, int value, string label, int min, int max,
+		int roundToNearest)
 	{
 		var minimumLoggingLimit = value;
 		var previousAlignment = Text.Anchor;
 		Text.Anchor = TextAnchor.MiddleRight;
-		Widgets.Label(inRect with { y = ls.curY, height = Text.CalcHeight(minimumLoggingLimit.ToString(), ls.ColumnWidth) }, minimumLoggingLimit.ToString());
+		Widgets.Label(
+			inRect with { y = ls.curY, height = Text.CalcHeight(minimumLoggingLimit.ToString(), ls.ColumnWidth) },
+			minimumLoggingLimit.ToString());
 		Text.Anchor = previousAlignment;
 		ls.Label(label);
-		var newLoggingLimit = GenMath.RoundTo(Convert.ToInt32(ls.Slider(minimumLoggingLimit, min, max)), roundToNearest);
+		var newLoggingLimit
+			= GenMath.RoundTo(Convert.ToInt32(ls.Slider(minimumLoggingLimit, min, max)), roundToNearest);
+		
 		return newLoggingLimit;
 	}
 
-	public static bool ShouldSkipForScrollView(float scrollViewSize, float entrySize, float entryPosition, float scrollPosition)
+	public static bool ShouldSkipForScrollView(float scrollViewSize, float entrySize, float entryPosition,
+		float scrollPosition)
 		=> entryPosition + entrySize < scrollPosition || entryPosition > scrollPosition + scrollViewSize;
 
 	private static List<Color>? _allColors;
